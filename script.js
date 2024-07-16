@@ -1,10 +1,13 @@
 const searchbox=document.querySelector('.searchbox');
 const search_button=document.querySelector('.search_button');
 const recipeContainer=document.querySelector('.recipe-container');
+const recipeDetailsContent=document.querySelector('.recipe-details-content');
+const recipeCloseBtn=document.querySelector('.recipe-close-btn');
 
 //Function to get recipes
 const fetchRecipes =async (query) =>{
     recipeContainer.innerHTML='<h2>Fetching Recipe...</h2>'
+    try {
      const data= await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${query}`);
      const response = await data.json();
 
@@ -25,7 +28,7 @@ recipeContainer.innerHTML='';  //empty the recipe container before adding the im
         recipeDiv.appendChild(button);
 
         //Adding Event listener  to the recipe button 
-        button.addEventListener('click',() = >{
+        button.addEventListener('click',() =>{
          openRecipePopup(meal);
         });
         
@@ -34,13 +37,60 @@ recipeContainer.innerHTML='';  //empty the recipe container before adding the im
         
         // console.log(meal);
      });
+    } catch (error) {
+        recipeContainer.innerHTML='<h2>Error in Fetching Recipes...</h2>'
+    }
     //  console.log(responce.meals[0])
 }
 
+//function to fetch ingredient and measurement
+const fetchIngredients=(meal) =>{
+   let ingredientsList="";
+   for (let i = 1; i<=20; i++) {
+    const ingredient= meal[`strIngredient${i}`];
+    if (ingredient) {
+        const measure =meal[`strMeasure${i}`];
+        ingredientsList+= `<li>${measure} ${ingredient}</li>`
+    }
+    else{
+        break;
+    }
+}
+   return ingredientsList;
+}
+
+
+const openRecipePopup = (meal) =>{
+    recipeDetailsContent.innerHTML=`
+     <h2 class="recipename">${meal.strMeal}</h2>
+     <h3>Ingredients:</h3>
+     <ul class="ingredientlist">${fetchIngredients(meal)}</ul>
+     <div  class="recipeInstruction">
+        <h3>Instructions:</h3>
+         <p>${meal.strInstructions}</p>
+    </div>
+    `
+    recipeDetailsContent.parentElement.style.display = "block";
+}
+
+recipeCloseBtn.addEventListener('click',()=>{
+    recipeDetailsContent.parentElement.style.display="none";
+});
+
 search_button.addEventListener("click",(e) =>{
     e.preventDefault();    //to prevent refreshing the page 
-    const searchInput= searchbox.value.trim();   //trim the extra space in the searching
+    const searchInput= searchbox.value.trim();
+    if (!searchInput) {
+        recipeContainer.innerHTML= `
+        <h2>Type the Meal in the Search Box.</h2>
+        `
+        return;
+    }
+     //trim the extra space in the searching
     fetchRecipes(searchInput);
     // console.log("Button Clicked");
 
-}) ;
+});
+
+
+
